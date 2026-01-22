@@ -37,4 +37,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Docker layer caching for faster builds
 - Automated verification tests
 
-[v3.2.1]: https://github.com/YOUR-ORG/yobiiq-sdk-builder/releases/tag/v3.2.1
+[v3.2.1]: https://github.com/Yobiiq-BV/yobiiq-sdk-builder/releases/tag/v3.2.1

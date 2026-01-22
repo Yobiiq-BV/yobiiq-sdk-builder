@@ -6,7 +6,7 @@
 
 set -e
 
-IMAGE_NAME="${1:-ghcr.io/YOUR-ORG/yobiiq-sdk-builder:v3.2.1}"
+IMAGE_NAME="${1:-ghcr.io/yobiiq-bv/yobiiq-sdk-builder:v3.2.1}"
 
 echo "========================================="
 echo "YOBIIQ SDK Builder Image Verification"

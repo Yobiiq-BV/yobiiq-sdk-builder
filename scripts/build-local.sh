@@ -9,7 +9,7 @@ set -e
 # Default values
 VERSION="${1:-v3.2.1}"
 IMAGE_NAME="yobiiq-sdk-builder"
-REGISTRY="${REGISTRY:-ghcr.io/YOUR-ORG}"
+REGISTRY="${REGISTRY:-ghcr.io/yobiiq-bv}"
 
 echo "========================================="
 echo "Building YOBIIQ SDK Builder Image"
