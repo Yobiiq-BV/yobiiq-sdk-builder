@@ -1,0 +1,98 @@
+name: Monthly Scheduled Build
+
+on:
+  schedule:
+    # Run on the 1st of every month at 2:00 AM UTC
+    - cron: '0 2 1 * *'
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  scheduled-build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Read version and generate date tag
+        id: version
+        run: |
+          NCS_VERSION=$(grep NRF_CONNECT_SDK_VERSION VERSION.txt | cut -d'=' -f2)
+          echo "ncs_version=${NCS_VERSION}" >> $GITHUB_OUTPUT
+          
+          # Generate monthly tag (e.g., v3.2.1-2026-01)
+          DATE_TAG="${NCS_VERSION}-$(date +%Y-%m)"
+          echo "date_tag=${DATE_TAG}" >> $GITHUB_OUTPUT
+          
+          # Extract major.minor version
+          MAJOR_MINOR=$(echo ${NCS_VERSION} | sed -E 's/(v[0-9]+\.[0-9]+).*/\1/')
+          echo "major_minor=${MAJOR_MINOR}" >> $GITHUB_OUTPUT
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=${{ steps.version.outputs.ncs_version }}
+            type=raw,value=${{ steps.version.outputs.date_tag }}
+            type=raw,value=${{ steps.version.outputs.major_minor }}
+            type=raw,value=latest
+      
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+      
+      - name: Run image verification
+        run: |
+          echo "Pulling image for verification..."
+          docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.date_tag }}
+          
+          echo "Running verification tests..."
+          docker run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.date_tag }} /bin/bash -c "
+            set -e
+            echo '=== Scheduled Build Verification ==='
+            west --version
+            cmake --version
+            python3 --version
+            ls -la /workdir/nrf/
+            echo '=== Verification Complete ==='
+          "
+      
+      - name: Create summary
+        run: |
+          echo "## Monthly Build Completed :calendar:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Build Date:** $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Image:** \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Tags:**" >> $GITHUB_STEP_SUMMARY
+          echo "- \`${{ steps.version.outputs.ncs_version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- \`${{ steps.version.outputs.date_tag }}\` (monthly)" >> $GITHUB_STEP_SUMMARY
+          echo "- \`${{ steps.version.outputs.major_minor }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- \`latest\`" >> $GITHUB_STEP_SUMMARY

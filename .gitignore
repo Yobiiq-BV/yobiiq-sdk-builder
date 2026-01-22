@@ -1,0 +1,28 @@
+# Exclude build artifacts
+build/
+*.build/
+
+# Exclude git
+.git/
+.gitignore
+
+# Exclude IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Exclude documentation
+docs/
+
+# Exclude tests
+tests/
+test/
+
+# Exclude CI/CD (but keep GitHub Actions)
+# .github/ - Don't ignore, we need workflows!
+.gitlab-ci.yml
+
+# Exclude temporary files
+*.tmp
+*.log
