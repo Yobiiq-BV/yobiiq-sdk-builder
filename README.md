@@ -6,9 +6,10 @@ Docker image providing a complete build environment for the YOBIIQ KiBi SDK, bas
 
 This repository contains the Dockerfile and build infrastructure for creating containerized build environments for YOBIIQ KiBi SDK development. The image includes:
 
-- **nRF Connect SDK v3.2.1** - Nordic Semiconductor's SDK
-- **Zephyr SDK 0.16.5** - ARM toolchain and build tools
-- **West tool** - Meta-tool for managing Zephyr projects
+- **nRF Connect SDK v3.2.1** - Nordic Semiconductor's SDK (installed via nrfutil)
+- **nrfutil toolchain-manager** - Official Nordic toolchain installer
+- **Zephyr SDK** - ARM toolchain and build tools (bundled)
+- **West tool** - Meta-tool for managing Zephyr projects (bundled)
 - **Build tools** - CMake, Ninja, Python, and all required dependencies
 
 ## Quick Start
@@ -28,12 +29,14 @@ docker run -it --rm ghcr.io/yobiiq-bv/yobiiq-sdk-builder:v3.2.1
 ### Build Your Project
 
 ```bash
-# Inside the container
-cd /workdir
+# Inside the container, the environment is automatically loaded
+cd /workspace
 git clone https://github.com/Yobiiq-BV/yobiiq-sdk.git
 cd yobiiq-sdk
 west build -b nrf52840dk_nrf52840 samples/hello_world
 ```
+
+> **Note**: The nRF Connect SDK environment variables are automatically sourced when you start the container.
 
 ## Available Tags
 

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 # Dockerfile for YOBIIQ KiBi SDK Build Environment
-# Based on nRF Connect SDK v3.2.1
+# Based on nRF Connect SDK v3.2.1 using nrfutil toolchain-manager
 #
 
 FROM ubuntu:22.04
@@ -16,72 +16,67 @@ LABEL org.opencontainers.image.source="https://github.com/Yobiiq-BV/yobiiq-sdk-b
 # Avoid prompts from apt
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install base dependencies
+# Create ccache directory
+RUN mkdir -p /var/cache/ccache && chmod 777 /var/cache/ccache
+ENV CCACHE_DIR=/var/cache/ccache
+
+# Install base dependencies (minimal set - nrfutil handles most toolchain needs)
 RUN apt-get update && apt-get install -y \
     wget \
     curl \
     git \
-    cmake \
-    ninja-build \
-    gperf \
-    ccache \
-    dfu-util \
-    device-tree-compiler \
-    python3 \
     python3-pip \
-    python3-setuptools \
-    python3-tk \
-    python3-wheel \
-    xz-utils \
-    file \
-    make \
+    python3-venv \
+    unzip \
+    jq \
+    apt-utils \
+    build-essential \
     gcc \
     gcc-multilib \
     g++-multilib \
-    libsdl2-dev \
-    libmagic1 \
+    openssh-client \
+    patch \
+    ccache \
+    dfu-util \
+    device-tree-compiler \
+    libsdl2-dev
+
+# Install nRF Command Line Tools (optional - includes nrfjprog, mergehex, etc.)
+# Note: This is not required for SDK builds, only for direct device programming
+ARG NRF_COMMAND_LINE_TOOLS_VERSION=10.24.2
+RUN wget -q https://nsscprodmedia.blob.core.windows.net/prod/software-and-other-downloads/desktop-software/nrf-command-line-tools/sw/versions-10-x-x/10-24-2/nrf-command-line-tools_10.24.2_amd64.deb \
+    && apt-get install -y ./nrf-command-line-tools_10.24.2_amd64.deb \
+    && rm nrf-command-line-tools_10.24.2_amd64.deb \
     && rm -rf /var/lib/apt/lists/*
 
-# Create working directory
-WORKDIR /workdir
+# Install nrfutil
+RUN wget -q "https://files.nordicsemi.com/ui/api/v1/download?repoKey=swtools&path=external/nrfutil/executables/x86_64-unknown-linux-gnu/nrfutil" -O /usr/local/bin/nrfutil \
+    && chmod +x /usr/local/bin/nrfutil
 
-# Install west
-RUN pip3 install --no-cache-dir west
-
-# Install Zephyr SDK
-ARG ZEPHYR_SDK_VERSION=0.16.5
-RUN wget -q https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v${ZEPHYR_SDK_VERSION}/zephyr-sdk-${ZEPHYR_SDK_VERSION}_linux-x86_64.tar.xz && \
-    tar xf zephyr-sdk-${ZEPHYR_SDK_VERSION}_linux-x86_64.tar.xz && \
-    rm zephyr-sdk-${ZEPHYR_SDK_VERSION}_linux-x86_64.tar.xz && \
-    cd zephyr-sdk-${ZEPHYR_SDK_VERSION} && \
-    ./setup.sh -t all -h -c && \
-    cd /workdir
-
-ENV ZEPHYR_SDK_INSTALL_DIR=/workdir/zephyr-sdk-${ZEPHYR_SDK_VERSION}
-
-# Initialize west workspace for nRF Connect SDK
+# Install toolchain-manager and the nRF Connect SDK toolchain
 ARG NCS_VERSION=v3.2.1
-RUN west init -m https://github.com/nrfconnect/sdk-nrf --mr ${NCS_VERSION} ncs && \
-    cd ncs && \
-    west update -o=--depth=1 -n && \
-    west zephyr-export
+ARG INSTALL_DIR=/opt/ncs
+RUN nrfutil install toolchain-manager \
+    && nrfutil toolchain-manager install --ncs-version ${NCS_VERSION} --install-dir ${INSTALL_DIR}
 
-# Install Python dependencies for nRF Connect SDK
-RUN pip3 install --no-cache-dir -r /workdir/ncs/zephyr/scripts/requirements.txt && \
-    pip3 install --no-cache-dir -r /workdir/ncs/nrf/scripts/requirements.txt && \
-    pip3 install --no-cache-dir -r /workdir/ncs/bootloader/mcuboot/scripts/requirements.txt
+# Get the toolchain environment dynamically
+# This creates a script that sets all necessary environment variables
+RUN nrfutil toolchain-manager env --as-script --install-dir ${INSTALL_DIR} > /opt/ncs_env.sh \
+    && chmod +x /opt/ncs_env.sh
 
-# Set environment variables
-ENV ZEPHYR_BASE=/workdir/ncs/zephyr
-ENV NRF_BASE=/workdir/ncs/nrf
+# Source the environment in every shell session
+RUN echo 'source /opt/ncs_env.sh' >> /etc/bash.bashrc
 
-# Clean up to reduce image size
-RUN apt-get clean && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
-    find /workdir/ncs -name "*.git" -type d -exec rm -rf {} + 2>/dev/null || true
+# Set a few key variables that we know will be needed
+# These are set dynamically via the sourced script, but we set some basics here for Docker
+ENV NCS_INSTALL_DIR=${INSTALL_DIR}
+
+# Clean up
+RUN apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Set working directory for builds
 WORKDIR /workspace
 
-# Default command
-CMD ["/bin/bash"]
+# Default command - source environment and start bash
+CMD ["/bin/bash", "-c", "source /opt/ncs_env.sh && exec /bin/bash"]
