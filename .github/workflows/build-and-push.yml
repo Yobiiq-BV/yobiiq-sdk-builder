@@ -90,7 +90,10 @@ jobs:
           
           echo "Running verification tests..."
           docker run --rm ${{ env.REGISTRY }}/${{ steps.repo.outputs.image_name }}:${{ steps.version.outputs.image_tag }} /bin/bash -c "
+            source /opt/ncs_env.sh
             set -e
+            echo '=== Checking nrfutil ==='
+            nrfutil --version
             echo '=== Checking West ==='
             west --version
             echo '=== Checking CMake ==='
@@ -99,11 +102,11 @@ jobs:
             ninja --version
             echo '=== Checking Python ==='
             python3 --version
-            echo '=== Checking Environment Variables ==='
-            echo \"ZEPHYR_BASE: \$ZEPHYR_BASE\"
+            echo '=== Checking GCC ==='
+            arm-zephyr-eabi-gcc --version | head -n1
+            echo '=== Checking Environment ==='
+            echo \"NCS_INSTALL_DIR: \$NCS_INSTALL_DIR\"
             echo \"ZEPHYR_SDK_INSTALL_DIR: \$ZEPHYR_SDK_INSTALL_DIR\"
-            echo '=== Checking nRF SDK ==='
-            ls -la /workdir/nrf/
             echo '=== All checks passed! ==='
           "
       

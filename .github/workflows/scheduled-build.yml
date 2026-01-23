@@ -83,12 +83,14 @@ jobs:
           
           echo "Running verification tests..."
           docker run --rm ${{ env.REGISTRY }}/${{ steps.repo.outputs.image_name }}:${{ steps.version.outputs.date_tag }} /bin/bash -c "
+            source /opt/ncs_env.sh
             set -e
             echo '=== Scheduled Build Verification ==='
+            nrfutil --version
             west --version
             cmake --version
             python3 --version
-            ls -la /workdir/nrf/
+            arm-zephyr-eabi-gcc --version | head -n1
             echo '=== Verification Complete ==='
           "
       
