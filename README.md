@@ -17,13 +17,13 @@ This repository contains the Dockerfile and build infrastructure for creating co
 ### Pull the Pre-built Image
 
 ```bash
-docker pull ghcr.io/yobiiq-bv/yobiiq-sdk-builder:v3.2.1
+docker pull ghcr.io/yobiiq/yobiiq-sdk-builder:v3.2.1
 ```
 
 ### Run the Container
 
 ```bash
-docker run -it --rm ghcr.io/yobiiq-bv/yobiiq-sdk-builder:v3.2.1
+docker run -it --rm ghcr.io/yobiiq/yobiiq-sdk-builder:v3.2.1
 ```
 
 ### Build Your Project
@@ -31,7 +31,7 @@ docker run -it --rm ghcr.io/yobiiq-bv/yobiiq-sdk-builder:v3.2.1
 ```bash
 # Inside the container, the environment is automatically loaded
 cd /workspace
-git clone https://github.com/Yobiiq-BV/yobiiq-sdk.git
+git clone https://github.com/yobiiq/yobiiq-sdk.git
 cd yobiiq-sdk
 west build -b nrf52840dk_nrf52840 samples/hello_world
 ```
@@ -57,7 +57,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/yobiiq-bv/yobiiq-sdk-builder:v3.2.1
+      image: ghcr.io/yobiiq/yobiiq-sdk-builder:v3.2.1
     steps:
       - uses: actions/checkout@v4
       - name: Build SDK
@@ -69,7 +69,7 @@ jobs:
 
 ```yaml
 build:
-  image: ghcr.io/yobiiq-bv/yobiiq-sdk-builder:v3.2.1
+  image: ghcr.io/yobiiq/yobiiq-sdk-builder:v3.2.1
   script:
     - west build -b nrf52840dk_nrf52840 samples/hello_world
 ```
@@ -84,7 +84,7 @@ Create `docker-compose.yml`:
 version: '3.8'
 services:
   builder:
-    image: ghcr.io/yobiiq-bv/yobiiq-sdk-builder:v3.2.1
+    image: ghcr.io/yobiiq/yobiiq-sdk-builder:v3.2.1
     volumes:
       - ./:/workspace
     working_dir: /workspace
@@ -103,7 +103,7 @@ Create `.devcontainer/devcontainer.json`:
 ```json
 {
   "name": "YOBIIQ SDK Development",
-  "image": "ghcr.io/yobiiq-bv/yobiiq-sdk-builder:v3.2.1",
+  "image": "ghcr.io/yobiiq/yobiiq-sdk-builder:v3.2.1",
   "workspaceFolder": "/workspace",
   "mounts": [
     "source=${localWorkspaceFolder},target=/workspace,type=bind"
@@ -139,7 +139,7 @@ Verify the image is properly configured:
 
 ```bash
 chmod +x scripts/verify-image.sh
-./scripts/verify-image.sh ghcr.io/yobiiq-bv/yobiiq-sdk-builder:v3.2.1
+./scripts/verify-image.sh ghcr.io/yobiiq/yobiiq-sdk-builder:v3.2.1
 ```
 
 This will check:
@@ -208,7 +208,7 @@ docker system prune -a
 
 The container runs as user `builder` (non-root). If you need root access:
 ```bash
-docker run -it --user root ghcr.io/yobiiq-bv/yobiiq-sdk-builder:v3.2.1
+docker run -it --user root ghcr.io/yobiiq/yobiiq-sdk-builder:v3.2.1
 ```
 
 ### West update fails
@@ -241,7 +241,7 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 
 ## Related Projects
 
-- [YOBIIQ KiBi SDK](https://github.com/Yobiiq-BV/yobiiq-sdk) - The SDK that uses this builder
+- [YOBIIQ KiBi SDK](https://github.com/yobiiq/yobiiq-sdk) - The SDK that uses this builder
 - [nRF Connect SDK](https://github.com/nrfconnect/sdk-nrf) - Nordic's SDK
 - [Zephyr Project](https://github.com/zephyrproject-rtos/zephyr) - Zephyr RTOS
 
@@ -249,7 +249,7 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 
 For issues related to:
 - **Docker image** - Open an issue in this repository
-- **YOBIIQ SDK** - See the [SDK repository](https://github.com/Yobiiq-BV/yobiiq-sdk)
+- **YOBIIQ SDK** - See the [SDK repository](https://github.com/yobiiq/yobiiq-sdk)
 - **nRF Connect SDK** - See [Nordic's documentation](https://developer.nordicsemi.com/)
 
 ## Changelog
