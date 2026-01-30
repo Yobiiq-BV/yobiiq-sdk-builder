@@ -39,7 +39,8 @@ RUN apt-get update && apt-get install -y \
     ccache \
     dfu-util \
     device-tree-compiler \
-    libsdl2-dev
+    libsdl2-dev \
+    lcov
 
 # Install nRF Command Line Tools (optional - includes nrfjprog, mergehex, etc.)
 # Note: This is not required for SDK builds, only for direct device programming
